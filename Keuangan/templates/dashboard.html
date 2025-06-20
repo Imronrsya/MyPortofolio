@@ -1,0 +1,182 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Manajemen Keuangan{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="fas fa-tachometer-alt"></i> Dashboard</h2>
+        <span class="text-muted">Selamat datang, {{ session.username }}!</span>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-4 mb-3">
+            <div class="card stats-card income">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Total Pemasukan</h6>
+                            <h3 class="mb-0">Rp {{ "{:,.0f}".format(total_income) }}</h3>
+                            <small>Bulan ini</small>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-arrow-up fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4 mb-3">
+            <div class="card stats-card expense">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Total Pengeluaran</h6>
+                            <h3 class="mb-0">Rp {{ "{:,.0f}".format(total_expense) }}</h3>
+                            <small>Bulan ini</small>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-arrow-down fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4 mb-3">
+            <div class="card stats-card balance">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Saldo</h6>
+                            <h3 class="mb-0">Rp {{ "{:,.0f}".format(balance) }}</h3>
+                            <small>{% if balance >= 0 %}Surplus{% else %}Defisit{% endif %}</small>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-wallet fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Recent Transactions -->
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5><i class="fas fa-clock"></i> Transaksi Terbaru</h5>
+                    <a href="{{ url_for('transactions') }}" class="btn btn-sm btn-light">Lihat Semua</a>
+                </div>
+                <div class="card-body">
+                    {% if recent_transactions %}
+                        {% for transaction in recent_transactions %}
+                        <div class="d-flex justify-content-between align-items-center mb-3 p-2 border-bottom">
+                            <div class="d-flex align-items-center">
+                                <span class="me-2">{{ transaction.category_icon }}</span>
+                                <div>
+                                    <strong>{{ transaction.category_name }}</strong>
+                                    <br>
+                                    <small class="text-muted">{{ transaction.description }}</small>
+                                </div>
+                            </div>
+                            <div class="text-end">                                <span class="{% if transaction.category_type == 'income' %}text-success{% else %}text-danger{% endif %}">
+                                    {% if transaction.category_type == 'income' %}+{% else %}-{% endif %}Rp {{ "{:,.0f}".format(transaction.amount) }}
+                                </span>
+                                <br>
+                                <small class="text-muted">{{ transaction.date }}</small>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted text-center">Belum ada transaksi</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Budget Status -->
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5><i class="fas fa-chart-pie"></i> Status Budget</h5>
+                    <a href="{{ url_for('budgets') }}" class="btn btn-sm btn-light">Kelola Budget</a>
+                </div>
+                <div class="card-body">
+                    {% if budget_status %}
+                        {% for status in budget_status %}
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between">
+                                <span>{{ status.budget.category.name }}</span>
+                                <span>Rp {{ "{:,.0f}".format(status.spent) }} / Rp {{ "{:,.0f}".format(status.budget.amount) }}</span>
+                            </div>                            <div class="progress mt-1">
+                                <div class="progress-bar budget-progress {% if status.percentage > 90 %}bg-danger{% elif status.percentage > 70 %}bg-warning{% else %}bg-success{% endif %}" 
+                                     data-progress="{{ status.percentage }}"></div>
+                            </div>
+                            <small class="text-muted">{{ "%.1f"|format(status.percentage) }}% terpakai</small>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted text-center">Belum ada budget yang dibuat</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Goals -->
+    {% if goals %}
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5><i class="fas fa-bullseye"></i> Target Keuangan</h5>
+                    <a href="{{ url_for('goals') }}" class="btn btn-sm btn-light">Kelola Target</a>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for goal in goals %}
+                        <div class="col-md-4 mb-3">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h6 class="card-title">{{ goal.name }}</h6>                                    <div class="progress mb-2">
+                                        {% set progress = (goal.current_amount / goal.target_amount * 100) if goal.target_amount > 0 else 0 %}
+                                        <div class="progress-bar bg-info goal-progress-dashboard" data-progress="{{ progress }}"></div>
+                                    </div>
+                                    <small class="text-muted">
+                                        Rp {{ "{:,.0f}".format(goal.current_amount) }} / Rp {{ "{:,.0f}".format(goal.target_amount) }}                                        <br>
+                                        Target: {{ goal.target_date }}
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Set budget progress bar widths
+    document.querySelectorAll('.budget-progress').forEach(progressBar => {
+        const progress = progressBar.getAttribute('data-progress');
+        progressBar.style.width = progress + '%';
+    });
+    
+    // Set goal progress bar widths
+    document.querySelectorAll('.goal-progress-dashboard').forEach(progressBar => {
+        const progress = progressBar.getAttribute('data-progress');
+        progressBar.style.width = progress + '%';
+    });
+});
+</script>
+{% endblock %}

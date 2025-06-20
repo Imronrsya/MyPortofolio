@@ -1,0 +1,207 @@
+{% extends "base.html" %}
+
+{% block title %}Profil - Manajemen Keuangan{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="fas fa-user"></i> Profil Pengguna</h2>
+    </div>
+
+    <div class="row">
+        <!-- Profile Information -->
+        <div class="col-lg-4 mb-4">
+            <div class="card">
+                <div class="card-body text-center">
+                    <div class="mb-3">
+                        <div class="bg-primary rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+                            <i class="fas fa-user fa-2x text-white"></i>
+                        </div>
+                    </div>
+                    <h5 class="card-title">{{ user.username }}</h5>
+                    <p class="text-muted">{{ user.email }}</p>                    <p class="text-muted">
+                        <small>Bergabung: {{ user.created_at[:10] if user.created_at else 'N/A' }}</small>
+                    </p>
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#editProfileModal">
+                        <i class="fas fa-edit"></i> Edit Profil
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics -->
+        <div class="col-lg-8">
+            <div class="row">
+                <div class="col-md-6 mb-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h6 class="card-subtitle mb-2 text-muted">Total Transaksi</h6>
+                                    <h4 class="text-primary">{{ stats.total_transactions }}</h4>
+                                </div>
+                                <div class="align-self-center">
+                                    <i class="fas fa-exchange-alt fa-2x text-primary"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-6 mb-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h6 class="card-subtitle mb-2 text-muted">Total Budget</h6>
+                                    <h4 class="text-info">{{ stats.total_budgets }}</h4>
+                                </div>
+                                <div class="align-self-center">
+                                    <i class="fas fa-chart-pie fa-2x text-info"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-6 mb-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h6 class="card-subtitle mb-2 text-muted">Total Target</h6>
+                                    <h4 class="text-warning">{{ stats.total_goals }}</h4>
+                                </div>
+                                <div class="align-self-center">
+                                    <i class="fas fa-bullseye fa-2x text-warning"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-6 mb-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h6 class="card-subtitle mb-2 text-muted">Saldo Bersih</h6>
+                                    <h4 class="{% if stats.net_balance >= 0 %}text-success{% else %}text-danger{% endif %}">
+                                        Rp {{ "{:,.0f}".format(stats.net_balance) }}
+                                    </h4>
+                                </div>
+                                <div class="align-self-center">
+                                    <i class="fas fa-wallet fa-2x {% if stats.net_balance >= 0 %}text-success{% else %}text-danger{% endif %}"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Financial Summary -->
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-chart-bar"></i> Ringkasan Keuangan</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Total Pemasukan:</span>
+                                <span class="text-success fw-bold">Rp {{ "{:,.0f}".format(stats.total_income) }}</span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Total Pengeluaran:</span>
+                                <span class="text-danger fw-bold">Rp {{ "{:,.0f}".format(stats.total_expense) }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="d-flex justify-content-between">
+                        <span class="fw-bold">Saldo Bersih:</span>
+                        <span class="fw-bold {% if stats.net_balance >= 0 %}text-success{% else %}text-danger{% endif %}">
+                            Rp {{ "{:,.0f}".format(stats.net_balance) }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Profile Modal -->
+<div class="modal fade" id="editProfileModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-edit"></i> Edit Profil</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('update_profile') }}">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="username" class="form-label">Username</label>
+                        <input type="text" class="form-control" id="username" name="username" value="{{ user.username }}" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email</label>
+                        <input type="email" class="form-control" id="email" name="email" value="{{ user.email }}" required>
+                    </div>
+                    
+                    <hr>
+                    <h6>Ubah Password (Opsional)</h6>
+                    
+                    <div class="mb-3">
+                        <label for="current_password" class="form-label">Password Saat Ini</label>
+                        <input type="password" class="form-control" id="current_password" name="current_password">
+                        <small class="text-muted">Isi hanya jika ingin mengubah password</small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="new_password" class="form-label">Password Baru</label>
+                        <input type="password" class="form-control" id="new_password" name="new_password">
+                        <small class="text-muted">Minimal 6 karakter</small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="confirm_password" class="form-label">Konfirmasi Password Baru</label>
+                        <input type="password" class="form-control" id="confirm_password" name="confirm_password">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-primary">Simpan Perubahan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Password confirmation validation
+document.getElementById('confirm_password').addEventListener('input', function() {
+    const newPassword = document.getElementById('new_password').value;
+    const confirmPassword = this.value;
+    
+    if (newPassword && confirmPassword && newPassword !== confirmPassword) {
+        this.setCustomValidity('Password tidak sesuai');
+    } else {
+        this.setCustomValidity('');
+    }
+});
+
+// Clear password fields if current password is cleared
+document.getElementById('current_password').addEventListener('input', function() {
+    if (!this.value) {
+        document.getElementById('new_password').value = '';
+        document.getElementById('confirm_password').value = '';
+    }
+});
+</script>
+{% endblock %}

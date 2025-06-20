@@ -1,0 +1,332 @@
+{% extends "base.html" %}
+
+{% block title %}Transaksi - Manajemen Keuangan{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="fas fa-exchange-alt"></i> Transaksi</h2>
+        <div class="d-flex gap-2">
+            <button type="button" class="btn btn-secondary" data-bs-toggle="collapse" data-bs-target="#searchFilters">
+                <i class="fas fa-search"></i> Filter
+            </button>
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addTransactionModal">
+                <i class="fas fa-plus"></i> Tambah Transaksi
+            </button>
+        </div>
+    </div>
+
+    <!-- Advanced Search Filters -->
+    <div class="collapse mb-4" id="searchFilters">
+        <div class="card">
+            <div class="card-body">
+                <form id="searchForm">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label for="search_term" class="form-label">Pencarian</label>
+                            <input type="text" class="form-control" id="search_term" placeholder="Cari deskripsi atau kategori...">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="search_category" class="form-label">Kategori</label>
+                            <select class="form-select" id="search_category">
+                                <option value="">Semua Kategori</option>
+                                {% for category in categories %}
+                                <option value="{{ category.id }}">{{ category.icon }} {{ category.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="search_type" class="form-label">Tipe</label>
+                            <select class="form-select" id="search_type">
+                                <option value="">Semua Tipe</option>
+                                <option value="income">Pemasukan</option>
+                                <option value="expense">Pengeluaran</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="date_from" class="form-label">Dari Tanggal</label>
+                            <input type="date" class="form-control" id="date_from">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="date_to" class="form-label">Sampai Tanggal</label>
+                            <input type="date" class="form-control" id="date_to">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="min_amount" class="form-label">Jumlah Min</label>
+                            <input type="number" class="form-control" id="min_amount" step="0.01" placeholder="0">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="max_amount" class="form-label">Jumlah Max</label>
+                            <input type="number" class="form-control" id="max_amount" step="0.01" placeholder="1000000">
+                        </div>
+                        <div class="col-12">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-search"></i> Cari
+                            </button>
+                            <button type="button" class="btn btn-secondary" onclick="clearSearch()">
+                                <i class="fas fa-times"></i> Reset
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Tanggal</th>
+                            <th>Kategori</th>
+                            <th>Deskripsi</th>
+                            <th>Jumlah</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>                        {% for transaction in transactions.items %}                        <tr>
+                            <td>{{ transaction.date }}</td>
+                            <td>
+                                <span class="me-2">{{ transaction.category_icon }}</span>
+                                {{ transaction.category_name }}
+                            </td>
+                            <td>{{ transaction.description }}</td>
+                            <td>
+                                <span class="{% if transaction.category_type == 'income' %}text-success{% else %}text-danger{% endif %}">
+                                    {% if transaction.category_type == 'income' %}+{% else %}-{% endif %}Rp {{ "{:,.0f}".format(transaction.amount) }}
+                                </span>
+                            </td><td>
+                                <button class="btn btn-sm btn-outline-primary edit-transaction-btn" data-transaction-id="{{ transaction.id }}">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger delete-transaction-btn" data-transaction-id="{{ transaction.id }}">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>            <!-- Pagination -->
+            {% if transactions.pages > 1 %}
+            <nav aria-label="Page navigation">
+                <ul class="pagination justify-content-center">
+                    {% if transactions.has_prev %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('transactions', page=transactions.prev_num) }}">Previous</a>
+                        </li>
+                    {% endif %}
+                    
+                    {% for page_num in range(1, transactions.pages + 1) %}
+                        {% if page_num != transactions.page %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('transactions', page=page_num) }}">{{ page_num }}</a>
+                            </li>
+                        {% else %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ page_num }}</span>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if transactions.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('transactions', page=transactions.next_num) }}">Next</a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Add Transaction Modal -->
+<div class="modal fade" id="addTransactionModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-plus"></i> Tambah Transaksi</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('add_transaction') }}">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="category_id" class="form-label">Kategori</label>
+                        <select class="form-select" id="category_id" name="category_id" required>
+                            <option value="">Pilih Kategori</option>
+                            {% for category in categories %}
+                            <option value="{{ category.id }}">{{ category.icon }} {{ category.name }} ({{ category.type }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="amount" class="form-label">Jumlah</label>
+                        <input type="number" class="form-control" id="amount" name="amount" step="0.01" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Deskripsi</label>
+                        <input type="text" class="form-control" id="description" name="description" required>
+                    </div>                    <div class="mb-3">
+                        <label for="date" class="form-label">Tanggal</label>
+                        <input type="date" class="form-control" id="date" name="date" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-primary">Simpan</button>
+                </div>
+            </form>        </div>
+    </div>
+</div>
+
+<!-- Edit Transaction Modal -->
+<div class="modal fade" id="editTransactionModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-edit"></i> Edit Transaksi</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" id="editTransactionForm">
+                <div class="modal-body">
+                    <input type="hidden" id="edit_transaction_id" name="transaction_id">
+                    
+                    <div class="mb-3">
+                        <label for="edit_category_id" class="form-label">Kategori</label>
+                        <select class="form-select" id="edit_category_id" name="category_id" required>
+                            <option value="">Pilih Kategori</option>
+                            {% for category in categories %}
+                            <option value="{{ category.id }}">{{ category.icon }} {{ category.name }} ({{ category.type }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="edit_amount" class="form-label">Jumlah</label>
+                        <input type="number" class="form-control" id="edit_amount" name="amount" step="0.01" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="edit_description" class="form-label">Deskripsi</label>
+                        <input type="text" class="form-control" id="edit_description" name="description" placeholder="Deskripsi transaksi">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="edit_date" class="form-label">Tanggal</label>
+                        <input type="date" class="form-control" id="edit_date" name="date" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-primary">Update</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Set today's date as default
+document.addEventListener('DOMContentLoaded', function() {
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('date').value = today;
+    
+    // Add event listeners for edit buttons
+    document.querySelectorAll('.edit-transaction-btn').forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            const transactionId = this.getAttribute('data-transaction-id');
+            editTransaction(transactionId);
+        });
+    });
+    
+    // Add event listeners for delete buttons
+    document.querySelectorAll('.delete-transaction-btn').forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            const transactionId = this.getAttribute('data-transaction-id');
+            deleteTransaction(transactionId);
+        });
+    });
+});
+
+function editTransaction(id) {
+    // Fetch transaction data
+    fetch(`/edit_transaction/${id}`)
+        .then(response => response.json())
+        .then(data => {
+            // Populate edit form
+            document.getElementById('edit_transaction_id').value = data.id;
+            document.getElementById('edit_category_id').value = data.category_id;
+            document.getElementById('edit_amount').value = data.amount;
+            document.getElementById('edit_description').value = data.description;
+            document.getElementById('edit_date').value = data.date;
+            
+            // Set form action
+            document.getElementById('editTransactionForm').action = `/edit_transaction/${id}`;
+            
+            // Show modal
+            new bootstrap.Modal(document.getElementById('editTransactionModal')).show();
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Gagal memuat data transaksi');
+        });
+}
+
+function deleteTransaction(id) {
+    if (confirm('Apakah Anda yakin ingin menghapus transaksi ini?')) {
+        // Create form and submit
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/delete_transaction/${id}`;
+        
+        // Add CSRF token if needed
+        const csrfToken = document.querySelector('meta[name="csrf-token"]');
+        if (csrfToken) {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'csrf_token';
+            input.value = csrfToken.getAttribute('content');
+            form.appendChild(input);
+        }
+        
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+
+document.getElementById('searchForm').addEventListener('submit', function(event) {
+    event.preventDefault();
+    
+    // Get form data
+    const formData = new FormData(this);
+    
+    // Build query string
+    const queryString = new URLSearchParams(formData).toString();
+    
+    // Redirect to transactions page with query string
+    window.location.href = `?${queryString}`;
+});
+
+function clearSearch() {
+    document.getElementById('search_term').value = '';
+    document.getElementById('search_category').value = '';
+    document.getElementById('search_type').value = '';
+    document.getElementById('date_from').value = '';
+    document.getElementById('date_to').value = '';
+    document.getElementById('min_amount').value = '';
+    document.getElementById('max_amount').value = '';
+    
+    // Submit form to refresh page
+    document.getElementById('searchForm').submit();
+}
+</script>
+{% endblock %}

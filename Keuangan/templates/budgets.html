@@ -1,0 +1,260 @@
+{% extends "base.html" %}
+
+{% block title %}Budget - Manajemen Keuangan{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="fas fa-chart-pie"></i> Budget</h2>
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addBudgetModal">
+            <i class="fas fa-plus"></i> Tambah Budget
+        </button>
+    </div>
+
+    <div class="row">
+        {% for budget in budgets %}
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="card-title">
+                            <span class="me-2">{{ budget.category.icon }}</span>
+                            {{ budget.category.name }}
+                        </h5>
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="dropdown">
+                                <i class="fas fa-ellipsis-v"></i>
+                            </button>                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item edit-budget-btn" href="#" data-budget-id="{{ budget.id }}"><i class="fas fa-edit"></i> Edit</a></li>
+                                <li><a class="dropdown-item text-danger delete-budget-btn" href="#" data-budget-id="{{ budget.id }}"><i class="fas fa-trash"></i> Hapus</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between">
+                            <span>Budget</span>
+                            <span>Rp {{ "{:,.0f}".format(budget.amount) }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span>Periode</span>
+                            <span>{{ budget.period|title }}</span>
+                        </div>                        <div class="d-flex justify-content-between">
+                            <span>Tanggal</span>
+                            <span>{{ budget.start_date }} - {{ budget.end_date }}</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Progress would be calculated from transactions -->
+                    <div class="progress">
+                        <div class="progress-bar bg-info" style="width: 45%"></div>
+                    </div>
+                    <small class="text-muted">45% terpakai</small>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+        
+        {% if not budgets %}
+        <div class="col-12">
+            <div class="text-center py-5">
+                <i class="fas fa-chart-pie fa-3x text-muted mb-3"></i>
+                <h4 class="text-muted">Belum ada budget</h4>
+                <p class="text-muted">Mulai kelola keuangan Anda dengan membuat budget pertama</p>
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addBudgetModal">
+                    <i class="fas fa-plus"></i> Buat Budget
+                </button>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Add Budget Modal -->
+<div class="modal fade" id="addBudgetModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-plus"></i> Tambah Budget</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('add_budget') }}">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="category_id" class="form-label">Kategori</label>
+                        <select class="form-select" id="category_id" name="category_id" required>
+                            <option value="">Pilih Kategori Pengeluaran</option>
+                            {% for category in categories %}
+                            <option value="{{ category.id }}">{{ category.icon }} {{ category.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="amount" class="form-label">Jumlah Budget</label>
+                        <input type="number" class="form-control" id="amount" name="amount" step="0.01" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="period" class="form-label">Periode</label>
+                        <select class="form-select" id="period" name="period" required>
+                            <option value="weekly">Mingguan</option>
+                            <option value="monthly" selected>Bulanan</option>
+                            <option value="yearly">Tahunan</option>
+                        </select>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-6">
+                            <div class="mb-3">
+                                <label for="start_date" class="form-label">Tanggal Mulai</label>
+                                <input type="date" class="form-control" id="start_date" name="start_date" required>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="mb-3">
+                                <label for="end_date" class="form-label">Tanggal Selesai</label>
+                                <input type="date" class="form-control" id="end_date" name="end_date" required>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-primary">Simpan</button>
+                </div>
+            </form>        </div>
+    </div>
+</div>
+
+<!-- Edit Budget Modal -->
+<div class="modal fade" id="editBudgetModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-edit"></i> Edit Budget</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" id="editBudgetForm">
+                <div class="modal-body">
+                    <input type="hidden" id="edit_budget_id" name="budget_id">
+                    
+                    <div class="mb-3">
+                        <label for="edit_budget_category_id" class="form-label">Kategori</label>
+                        <select class="form-select" id="edit_budget_category_id" name="category_id" required>
+                            <option value="">Pilih Kategori Pengeluaran</option>
+                            {% for category in categories %}
+                            <option value="{{ category.id }}">{{ category.icon }} {{ category.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="edit_budget_amount" class="form-label">Jumlah Budget</label>
+                        <input type="number" class="form-control" id="edit_budget_amount" name="amount" step="0.01" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="edit_budget_period" class="form-label">Periode</label>
+                        <select class="form-select" id="edit_budget_period" name="period" required>
+                            <option value="weekly">Mingguan</option>
+                            <option value="monthly">Bulanan</option>
+                            <option value="yearly">Tahunan</option>
+                        </select>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-6">
+                            <div class="mb-3">
+                                <label for="edit_budget_start_date" class="form-label">Tanggal Mulai</label>
+                                <input type="date" class="form-control" id="edit_budget_start_date" name="start_date" required>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="mb-3">
+                                <label for="edit_budget_end_date" class="form-label">Tanggal Selesai</label>
+                                <input type="date" class="form-control" id="edit_budget_end_date" name="end_date" required>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-primary">Update</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Set default dates for budget form
+document.addEventListener('DOMContentLoaded', function() {
+    const today = new Date();
+    const nextMonth = new Date(today.getFullYear(), today.getMonth() + 1, today.getDate());
+    
+    const startDate = today.toISOString().split('T')[0];
+    const endDate = nextMonth.toISOString().split('T')[0];
+    
+    document.getElementById('start_date').value = startDate;
+    document.getElementById('end_date').value = endDate;
+    
+    // Add event listeners for edit buttons
+    document.querySelectorAll('.edit-budget-btn').forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            const budgetId = this.getAttribute('data-budget-id');
+            editBudget(budgetId);
+        });
+    });
+    
+    // Add event listeners for delete buttons
+    document.querySelectorAll('.delete-budget-btn').forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            const budgetId = this.getAttribute('data-budget-id');
+            deleteBudget(budgetId);
+        });
+    });
+});
+
+function editBudget(id) {
+    // Fetch budget data
+    fetch(`/edit_budget/${id}`)
+        .then(response => response.json())
+        .then(data => {
+            // Populate edit form
+            document.getElementById('edit_budget_id').value = data.id;
+            document.getElementById('edit_budget_category_id').value = data.category_id;
+            document.getElementById('edit_budget_amount').value = data.amount;
+            document.getElementById('edit_budget_period').value = data.period;
+            document.getElementById('edit_budget_start_date').value = data.start_date;
+            document.getElementById('edit_budget_end_date').value = data.end_date;
+            
+            // Set form action
+            document.getElementById('editBudgetForm').action = `/edit_budget/${id}`;
+            
+            // Show modal
+            new bootstrap.Modal(document.getElementById('editBudgetModal')).show();
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Gagal memuat data budget');
+        });
+}
+
+function deleteBudget(id) {
+    if (confirm('Apakah Anda yakin ingin menghapus budget ini?')) {
+        // Create form and submit
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/delete_budget/${id}`;
+        
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+</script>
+{% endblock %}

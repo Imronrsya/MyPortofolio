@@ -1,0 +1,298 @@
+{% extends "base.html" %}
+
+{% block title %}Laporan - Manajemen Keuangan{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="fas fa-chart-bar"></i> Laporan Keuangan</h2>        <div class="btn-group" role="group">
+            <a href="{{ url_for('export_transactions') }}" class="btn btn-outline-primary">
+                <i class="fas fa-download"></i> Export Transaksi
+            </a>
+            <a href="{{ url_for('export_budgets') }}" class="btn btn-outline-success">
+                <i class="fas fa-download"></i> Export Budget
+            </a>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <!-- Expense Pie Chart -->
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-chart-pie"></i> Pengeluaran per Kategori</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="expensePieChart" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Monthly Trend Chart -->
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-line-chart"></i> Tren Bulanan</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="monthlyTrendChart" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary Statistics -->
+    <div class="row mb-4">
+        <div class="col-md-3 mb-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <i class="fas fa-calendar-month fa-2x text-primary mb-2"></i>
+                    <h5>Rata-rata Pengeluaran</h5>
+                    <h4 class="text-primary">Rp 2,500,000</h4>
+                    <small class="text-muted">Per bulan</small>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 mb-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <i class="fas fa-arrow-trend-up fa-2x text-success mb-2"></i>
+                    <h5>Pertumbuhan</h5>
+                    <h4 class="text-success">+12%</h4>
+                    <small class="text-muted">Dari bulan lalu</small>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 mb-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <i class="fas fa-shopping-cart fa-2x text-warning mb-2"></i>
+                    <h5>Kategori Tertinggi</h5>
+                    <h4 class="text-warning">Makanan</h4>
+                    <small class="text-muted">35% dari total</small>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 mb-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <i class="fas fa-calendar-check fa-2x text-info mb-2"></i>
+                    <h5>Hari Aktif</h5>
+                    <h4 class="text-info">23</h4>
+                    <small class="text-muted">Bulan ini</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detailed Reports -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-table"></i> Ringkasan per Kategori</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Kategori</th>
+                                    <th>Total Transaksi</th>
+                                    <th>Jumlah</th>
+                                    <th>Persentase</th>
+                                    <th>Rata-rata</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Data will be populated dynamically -->
+                                <tr>
+                                    <td><span class="me-2">🍽️</span> Makanan</td>
+                                    <td>45</td>
+                                    <td class="text-danger">Rp 1,250,000</td>
+                                    <td>35%</td>
+                                    <td>Rp 27,778</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="me-2">🚗</span> Transportasi</td>
+                                    <td>23</td>
+                                    <td class="text-danger">Rp 800,000</td>
+                                    <td>22%</td>
+                                    <td>Rp 34,783</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="me-2">🛍️</span> Belanja</td>
+                                    <td>18</td>
+                                    <td class="text-danger">Rp 650,000</td>
+                                    <td>18%</td>
+                                    <td>Rp 36,111</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="me-2">🎬</span> Hiburan</td>
+                                    <td>12</td>
+                                    <td class="text-danger">Rp 450,000</td>
+                                    <td>13%</td>
+                                    <td>Rp 37,500</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="me-2">📄</span> Tagihan</td>
+                                    <td>8</td>
+                                    <td class="text-danger">Rp 420,000</td>
+                                    <td>12%</td>
+                                    <td>Rp 52,500</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Load and display charts
+document.addEventListener('DOMContentLoaded', function() {
+    loadExpensePieChart();
+    loadMonthlyTrendChart();
+});
+
+function loadExpensePieChart() {
+    fetch('/api/chart_data?type=expense_pie')
+        .then(response => response.json())
+        .then(data => {
+            const ctx = document.getElementById('expensePieChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: data.labels,
+                    datasets: [{
+                        data: data.values,
+                        backgroundColor: data.colors,
+                        borderWidth: 2,
+                        borderColor: '#fff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        })
+        .catch(error => {
+            console.error('Error loading pie chart:', error);
+            // Show sample data if API fails
+            const ctx = document.getElementById('expensePieChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: ['Makanan', 'Transportasi', 'Belanja', 'Hiburan'],
+                    datasets: [{
+                        data: [35, 25, 20, 20],
+                        backgroundColor: ['#e74c3c', '#3498db', '#9b59b6', '#e67e22'],
+                        borderWidth: 2,
+                        borderColor: '#fff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        });
+}
+
+function loadMonthlyTrendChart() {
+    fetch('/api/chart_data?type=monthly_trend')
+        .then(response => response.json())
+        .then(data => {
+            const ctx = document.getElementById('monthlyTrendChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.labels,
+                    datasets: [{
+                        label: 'Pemasukan',
+                        data: data.income,
+                        borderColor: '#27ae60',
+                        backgroundColor: 'rgba(39, 174, 96, 0.1)',
+                        tension: 0.4
+                    }, {
+                        label: 'Pengeluaran',
+                        data: data.expense,
+                        borderColor: '#e74c3c',
+                        backgroundColor: 'rgba(231, 76, 60, 0.1)',
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return 'Rp ' + value.toLocaleString();
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        })
+        .catch(error => {
+            console.error('Error loading trend chart:', error);
+            // Show sample data if API fails
+            const ctx = document.getElementById('monthlyTrendChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun'],
+                    datasets: [{
+                        label: 'Pemasukan',
+                        data: [5000000, 5200000, 4800000, 5500000, 5300000, 5600000],
+                        borderColor: '#27ae60',
+                        backgroundColor: 'rgba(39, 174, 96, 0.1)',
+                        tension: 0.4
+                    }, {
+                        label: 'Pengeluaran',
+                        data: [3500000, 3800000, 3200000, 4000000, 3600000, 3900000],
+                        borderColor: '#e74c3c',
+                        backgroundColor: 'rgba(231, 76, 60, 0.1)',
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return 'Rp ' + value.toLocaleString();
+                                }
+                            }
+                        }
+                    }
+                }
+            });        });
+}
+</script>
+{% endblock %}

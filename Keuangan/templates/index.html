@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center min-vh-100 align-items-center">
+        <div class="col-lg-8">
+            <div class="text-center mb-5">
+                <h1 class="display-4 fw-bold text-primary">
+                    <i class="fas fa-wallet"></i> Manajemen Keuangan Pribadi
+                </h1>
+                <p class="lead text-muted">Kelola keuangan Anda dengan mudah dan profesional</p>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100">
+                        <div class="card-body text-center">
+                            <i class="fas fa-chart-line fa-3x text-success mb-3"></i>
+                            <h5 class="card-title">Lacak Pengeluaran</h5>
+                            <p class="card-text">Monitor semua pemasukan dan pengeluaran Anda dengan mudah dan terorganisir.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100">
+                        <div class="card-body text-center">
+                            <i class="fas fa-bullseye fa-3x text-info mb-3"></i>
+                            <h5 class="card-title">Atur Budget</h5>
+                            <p class="card-text">Buat budget bulanan dan pantau progress pencapaian target keuangan Anda.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100">
+                        <div class="card-body text-center">
+                            <i class="fas fa-chart-pie fa-3x text-warning mb-3"></i>
+                            <h5 class="card-title">Analisis Keuangan</h5>
+                            <p class="card-text">Dapatkan insight mendalam tentang pola pengeluaran dengan grafik interaktif.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100">
+                        <div class="card-body text-center">
+                            <i class="fas fa-mobile-alt fa-3x text-danger mb-3"></i>
+                            <h5 class="card-title">Responsive Design</h5>
+                            <p class="card-text">Akses aplikasi dari mana saja dengan tampilan yang responsif di semua device.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-center mt-5">
+                <a href="{{ url_for('login') }}" class="btn btn-primary btn-lg me-3">
+                    <i class="fas fa-sign-in-alt"></i> Masuk
+                </a>
+                <a href="{{ url_for('register') }}" class="btn btn-outline-primary btn-lg">
+                    <i class="fas fa-user-plus"></i> Daftar
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,270 @@
+{% extends "base.html" %}
+
+{% block title %}Target Keuangan - Manajemen Keuangan{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="fas fa-bullseye"></i> Target Keuangan</h2>
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addGoalModal">
+            <i class="fas fa-plus"></i> Tambah Target
+        </button>
+    </div>
+
+    <div class="row">
+        {% for goal in goals %}
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="card-title">{{ goal.name }}</h5>
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="dropdown">
+                                <i class="fas fa-ellipsis-v"></i>
+                            </button>                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item update-goal-btn" href="#" data-goal-id="{{ goal.id }}"><i class="fas fa-plus"></i> Tambah Dana</a></li>
+                                <li><a class="dropdown-item edit-goal-btn" href="#" data-goal-id="{{ goal.id }}"><i class="fas fa-edit"></i> Edit</a></li>
+                                <li><a class="dropdown-item text-danger delete-goal-btn" href="#" data-goal-id="{{ goal.id }}"><i class="fas fa-trash"></i> Hapus</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                      {% set progress = (goal.current_amount / goal.target_amount * 100) if goal.target_amount > 0 else 0 %}
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between">
+                            <span>Progress</span>
+                            <span>{{ "%.1f"|format(progress) }}%</span>
+                        </div>
+                        <div class="progress mb-2">
+                            <div class="progress-bar bg-success goal-progress" data-progress="{{ progress }}"></div>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span>Rp {{ "{:,.0f}".format(goal.current_amount) }}</span>
+                            <span>Rp {{ "{:,.0f}".format(goal.target_amount) }}</span>
+                        </div>
+                    </div>
+                      <div class="mb-3">
+                        <div class="d-flex justify-content-between">
+                            <span>Target Tanggal</span>
+                            <span>{{ goal.target_date }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span>Sisa Waktu</span>
+                            <span class="text-info">
+                                {{ goal.target_date }}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    {% if goal.description %}
+                    <p class="text-muted small">{{ goal.description }}</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+        
+        {% if not goals %}
+        <div class="col-12">
+            <div class="text-center py-5">
+                <i class="fas fa-bullseye fa-3x text-muted mb-3"></i>
+                <h4 class="text-muted">Belum ada target keuangan</h4>
+                <p class="text-muted">Set target keuangan Anda untuk meningkatkan motivasi menabung</p>
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addGoalModal">
+                    <i class="fas fa-plus"></i> Buat Target
+                </button>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Add Goal Modal -->
+<div class="modal fade" id="addGoalModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-plus"></i> Tambah Target Keuangan</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('add_goal') }}">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Nama Target</label>
+                        <input type="text" class="form-control" id="name" name="name" placeholder="Misal: Liburan ke Bali" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="target_amount" class="form-label">Jumlah Target</label>
+                        <input type="number" class="form-control" id="target_amount" name="target_amount" step="0.01" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="target_date" class="form-label">Tanggal Target</label>
+                        <input type="date" class="form-control" id="target_date" name="target_date" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Deskripsi (Opsional)</label>
+                        <textarea class="form-control" id="description" name="description" rows="3" placeholder="Deskripsi detail tentang target Anda"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-primary">Simpan</button>
+                </div>
+            </form>        </div>
+    </div>
+</div>
+
+<!-- Edit Goal Modal -->
+<div class="modal fade" id="editGoalModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-edit"></i> Edit Target Keuangan</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" id="editGoalForm">
+                <div class="modal-body">
+                    <input type="hidden" id="edit_goal_id" name="goal_id">
+                    
+                    <div class="mb-3">
+                        <label for="edit_goal_name" class="form-label">Nama Target</label>
+                        <input type="text" class="form-control" id="edit_goal_name" name="name" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="edit_goal_target_amount" class="form-label">Jumlah Target</label>
+                        <input type="number" class="form-control" id="edit_goal_target_amount" name="target_amount" step="0.01" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="edit_goal_target_date" class="form-label">Tanggal Target</label>
+                        <input type="date" class="form-control" id="edit_goal_target_date" name="target_date" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="edit_goal_description" class="form-label">Deskripsi (Opsional)</label>
+                        <textarea class="form-control" id="edit_goal_description" name="description" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-primary">Update</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Update Goal Progress Modal -->
+<div class="modal fade" id="updateProgressModal" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-plus"></i> Tambah Dana</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" id="updateProgressForm">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="progress_amount" class="form-label">Jumlah Dana</label>
+                        <input type="number" class="form-control" id="progress_amount" name="amount" step="0.01" required>
+                        <small class="text-muted">Masukkan jumlah dana yang ingin ditambahkan</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-primary">Tambah</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Set progress bar widths
+    document.querySelectorAll('.goal-progress').forEach(progressBar => {
+        const progress = progressBar.getAttribute('data-progress');
+        progressBar.style.width = progress + '%';
+    });
+    
+    // Add event listeners for update goal buttons
+    document.querySelectorAll('.update-goal-btn').forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            const goalId = this.getAttribute('data-goal-id');
+            updateGoalProgress(goalId);
+        });
+    });
+    
+    // Add event listeners for edit goal buttons
+    document.querySelectorAll('.edit-goal-btn').forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            const goalId = this.getAttribute('data-goal-id');
+            editGoal(goalId);
+        });
+    });
+    
+    // Add event listeners for delete goal buttons
+    document.querySelectorAll('.delete-goal-btn').forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            const goalId = this.getAttribute('data-goal-id');
+            deleteGoal(goalId);
+        });
+    });
+});
+
+function editGoal(id) {
+    // Fetch goal data
+    fetch(`/edit_goal/${id}`)
+        .then(response => response.json())
+        .then(data => {
+            // Populate edit form
+            document.getElementById('edit_goal_id').value = data.id;
+            document.getElementById('edit_goal_name').value = data.name;
+            document.getElementById('edit_goal_target_amount').value = data.target_amount;
+            document.getElementById('edit_goal_target_date').value = data.target_date;
+            document.getElementById('edit_goal_description').value = data.description || '';
+            
+            // Set form action
+            document.getElementById('editGoalForm').action = `/edit_goal/${id}`;
+            
+            // Show modal
+            new bootstrap.Modal(document.getElementById('editGoalModal')).show();
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Gagal memuat data target');
+        });
+}
+
+function deleteGoal(id) {
+    if (confirm('Apakah Anda yakin ingin menghapus target ini?')) {
+        // Create form and submit
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/delete_goal/${id}`;
+        
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+
+function updateGoalProgress(id) {
+    // Set form action
+    document.getElementById('updateProgressForm').action = `/update_goal_progress/${id}`;
+    
+    // Clear the amount field
+    document.getElementById('progress_amount').value = '';
+    
+    // Show modal
+    new bootstrap.Modal(document.getElementById('updateProgressModal')).show();
+}
+</script>
+{% endblock %}
